@@ -1,0 +1,1978 @@
+# 技術スタック
+IDE：Visual Studio 2022
+言語：C#
+フレームワーク：.NET 8.0
+DB：SQL Server 2022
+DBサポートツール：Microsoft SQL Server Management Studio 19.1
+ソース管理：GitHub
+────────────────────────────────────────────────
+# Visual Studio
+
+## 拡張機能
+* Fine Code Coverage
+
+## NuGet（SQL用）
+* Microsoft.Data.SqlClient　※SQL Server使う場合に必要
+
+## NuGet（テストプロジェクト用）
+* ChainingAssertion（.NET Framework用）
+* ChainingAssertion.Core.MSTest（.NET用）
+* Moq
+────────────────────────────────────────────────
+# データベースの準備
+* 起動～接続
+  - SSMSを起動
+  - サーバー名をローカルホストにして「接続」クリック
+* データベース新規作成方法
+  - 「データベース」を右クリック＞「新しいデータベース」
+  - データベース名：DDD＞「OK」
+* テーブル新規作成方法
+  - 「DDD」を展開
+  - 「テーブル」を右クリック
+  - 「新規作成」＞「テーブル」
+  - 「Weather」「Areas」テーブルを作成
+  ※「Ctrl+S」でテーブル名を入力して保存
+* テーブル編集方法
+  - テーブル名を右クリック＞「すべての行の編集」
+────────────────────────────────────────────────
+# プロジェクト構成（アーキテクチャー）
+* WinForm
+  - View（画面）
+  - ViewModel（画面と1対1のロジック部分）
+* Infrastructure
+  - アプリケーションの外側との接触部分
+* Domain
+  - ビジネスロジック
+  - ValueObject, Entity, Helper, Exception, 静的ロジック, インターフェース（Repository）
+* テストプロジェクト
+
+## 依存関係
+* Winform
+  - 参照：Infrastructure, Domain
+* Infrastructure
+  - 参照：Domain
+* Test
+  - 参照：WinForm, Infrastructure, Domain
+* Domain
+  - 参照：なし
+────────────────────────────────────────────────
+# 開発準備
+
+## 新規プロジェクト作成
+* テンプレート：[Windows フォーム アプリ]
+  - プロジェクト名：[DDDNET8.UI]　※任意
+  - 場所：任意フォルダの中の[src]フォルダを選択
+  - ソリューション：デフォルト（新しいソリューションを作成する）
+  - ソリューション名：[DDDNET8]　※任意
+  - 別ディレクトリ配置
+  - フレームワーク：[.NET 8.0]
+* [Views][ViewModels]の2フォルダを作成
+  - デフォルトの[Form1.cs]を[WeatherLatestView.cs]にリネームし、[Views]フォルダに移動
+
+## その他プロジェクト作成
+* テンプレート：[クラス ライブラリ]
+  - プロジェクト名：[DDDNET8.Domain]
+    - [Entities][Repositories][ValueObjects]の3フォルダを作成
+    - [Helpers][Exceptions]フォルダも後ほど作成
+  - プロジェクト名：[DDDNET8.Infrastructure]
+    - [SqlServer]フォルダを作成
+  ※作成後、各プロジェクト内のデフォルトクラス（Class1.cs）を削除
+
+## テストプロジェクト作成
+* テンプレート：[MSTest テスト プロジェクト]
+  - プロジェクト名：[DDDNET8Test.Tests]　※任意
+  - フレームワーク：[.NET 8.0]
+* 作成後、[DDDNET8Test.Tests]をダブルクリック＞[net8.0]を[net8.0-windows]に書き換えて保存
+  ※[DDDNET8.UI]の記述に合わせる
+* NuGetをインストール
+  - ChainingAssertion.Core.MSTest
+  - Moq
+* 拡張機能インストール
+  - Fine Code Coverage（既にインストール済みであればスキップ）
+
+## 依存関係の設定
+* 前述の項を参照の上、設定する。
+────────────────────────────────────────────────
+# 初回テスト
+
+* テストクラス名：[WeatherLatestViewModelTest]
+* テストメソッド名：`シナリオ()`
+
+## テスト1：初期値
+* 画面を起動した時に、初期値が表示されている
+  - 今回の仕様：起動時は空文字が表示されて欲しい
+* 下記コードを作成
+  ```
+  var viewModel = new WeatherLatestViewModel();
+
+  // 起動時は空文字を初期値とする
+  viewModel.AreaIdText.Is("");
+  viewModel.DataDateText.Is("");
+  viewModel.ConditionText.Is("");
+  viewModel.TemperatureText.Is("");
+  ```
+* テスト実行してコンパイルエラーを発生させる
+  > テスト駆動開発の第一歩は、「まずコンパイルエラーを出す」
+* [ViewModels]フォルダに[WeatherLatestViewModel]クラスを作成
+  - アクセス修飾子：public
+* テストプロジェクトに下記using追加
+  - [ViewModels][ChainingAssertion]
+* コンパイルエラーの出ているプロパティを生成
+  - 各プロパティの型を`object` → `string`に変更
+* 再度テスト実行して失敗させる
+* 各プロパティの初期値を`string.Empty`にする
+* 再度テスト実行して成功すればOK
+  > 本番コードというのは、基本的に、テストを通すためだけに実装していく、というのがテスト駆動開発。
+  > こういう手順で作ると、一切無駄の無いコードが出来ていく。
+  > こまめにテストすることで、バグの混入にも気づきやすい。
+
+## テスト2：直近値
+* [直近値]ボタンを押した時に返すデータのテスト
+* viewmodelに`Search()`メソッドを実装
+  - SQLServerにアクセスしてデータを取ってくる想定。
+  - テストコードから実行した時はDBにアクセスしたくないので、テストと本番の切り分け処理用にインターフェースを実装。
+    ```
+    var dt = _weather.GetLatest(Convert.ToInt32(AreaIdText));
+
+    if (dt.Rows.Count > 0)
+    {
+        DataDateText = dt.Rows[0]["DataDate"].ToString();
+        ConditionText = dt.Rows[0]["Condition"].ToString();
+        TemperatureText = Math.Round(Convert.ToSingle(dt.Rows[0]["Temperature"]), 2).ToString("F2") + " " + "℃";
+    }
+    ```
+* 汎用的な関数と定数を作成する
+  - 一旦[WeatherLatestViewModel]内に作成。
+    ```
+    public string RoundString(float value, int decimalPoint)
+    {
+        var temp = Math.Round(value, decimalPoint);
+        return temp.ToString("F" + decimalPoint);
+    }
+    ```
+    ```
+    public const string TemperatureUnitName = "℃";
+    public const int TemperatureDecimalPoint = 2;
+    ```
+* 作成した関数と定数を別クラスに移す
+  - [Domain]フォルダに[Helpers]フォルダを作成
+    - [CommonFunc]と[CommonConst]の静的クラスを作成
+      - [CommonFunc]には、Roundの拡張関数を実装
+      - [CommonConst]には、"℃"の定数を定義
+* [WeatherLatestViewModel]内を修正
+  ```
+  TemperatureText = Convert.ToSingle(dt.Rows[0]["Temperature"]).RoundString(CommonConst.TemperatureDecimalPoint) + CommonConst.TemperatureUnitName;
+  ```
+* Infrastructureに対してのインターフェースはDomain層に作っていく
+  - Domain層の[Repositories]
+  - Weatherテーブルに対してのリポジトリなので、[IWeatherRepository.cs]とする。
+  - アクセス修飾子：public
+  - `DataTable GetLatest(int areaId);`を定義。
+* [WeatherLatestViewModel]にコード追加
+    ```
+    private IWeatherRepository _weather;
+    
+    public WeatherLatestViewModel(IWeatherRepository weather)
+    {
+        _weather = weather;
+    }
+    ```
+  - コンストラクタの引数で、[IWeatherRepository]を指定させる。
+    - なので、フィールドではインスタンスを生成しない。
+    - コンストラクタに指定する引数で、テストと本番（`Weather`テーブル）の切り分けが可能になる。
+* [Moq]を使用
+  - テストコードの冒頭に下記を追加。
+    ```
+    var weatherMock = new Mock<IWeatherRepository>();
+    weatherMock.Setup(x => x.GetLatest(1)).Returns(() =>
+    {
+        var dt = new DataTable();
+        dt.Columns.Add("AreaId", typeof(int));
+        dt.Columns.Add("DataDate", typeof(DateTime));
+        dt.Columns.Add("Condition", typeof(int));
+        dt.Columns.Add("Temperature", typeof(float));
+
+        dt.Rows.Add(1, Convert.ToDateTime("2018/01/01 12:34:56"), 2, 12.3f);
+
+        return dt;
+    });
+
+    var viewModel = new WeatherLatestViewModel(weatherMock.Object);
+    ```
+  - これで下記テストが行える。
+    ```
+    viewModel.AreaIdText = "1";
+    viewModel.Search();
+    viewModel.AreaIdText.Is("1");
+    viewModel.DataDateText.Is("2018/01/01 12:34:56");
+    viewModel.ConditionText.Is("2");
+    viewModel.TemperatureText.Is("12.3 ℃");
+    ```
+────────────────────────────────────────────────
+# Repository
+* アプリケーション開発でRepositoryというと、一般的にデータの保管庫を指すことが多い。
+* 今回のDDDの文脈で言うと、仮に[IWeatherRepository]があったとしたら、
+  - DBの`Weather`テーブル
+  - Fakeクラス
+  - Moq
+  等、データの保管庫を柔軟に切り替えて、特定のデータを取ってくる窓口みたいなイメージ。
+* なので、下記がしっくりくるかも。
+  - 誤）Repository = データの保管庫
+  - 正）Repository = 各データの保管庫を取りまとめる窓口
+* [Domain]＞[Repositories]＞[I****Repository.cs]
+  - Domain層にInterfaceとして定義する。
+  - Repositoryの実装は[Infrastructure]に置かれる。
+* アクセス修飾子：public
+* 呼び出し元
+  - viewmodelのコンストラクタの引数＆フィールド
+    ```
+    private IWeatherRepository _weather;
+    
+    public WeatherLatestViewModel(IWeatherRepository weather)
+    {
+        _weather = weather;
+    }
+    ```
+  - テストクラスでのMoq
+    `var weatherMock = new Mock<IWeatherRepository>();`
+────────────────────────────────────────────────
+# Entity
+* 定義：データを運ぶ入れ物であり、運んでいる値に対するビジネスロジックの置き場所になる
+* ここまでデータの受け渡しに`DataTable`を使ってきたが、基本的には使わないほうが良い
+  - `DataTable`はパフォーマンスが悪い　※1万件以上だと結構遅い。
+  - リテラル文字のアクセスのため、スペルミスをしてもコンパイルエラーが出ず、実行時エラーになってしまう。
+  - テストコードが書きづらい（`Columns.Add`などの記述が面倒）。
+    - インテリセンスが出なかったり…。
+* `DataTable`ではなく、`Entity`と呼ばれるカスタムクラスを使う
+* 特徴
+  - 一意性のあるデータのひとかたまり
+    - 1つのインスタンスは他のインスタンスと重複しない（Uniqueなもの）。
+  - SQLなどで取得するデータの1行分
+* 注意点
+  - データ型は、DBの型をC#の型に置き換えたものにする。
+    - varchar → string
+    - Real → float
+  - 数値はバイト数に気をつけて変換
+    - DBで8バイトなのに、C#で4バイトで受け取るとかはNG（オーバーフローする）。
+* ロジックのある項目はValueObjectにする
+* Entitiy内の複数項目を使ったロジックなどを書く
+  - Entitiyというのは、値の受け渡しだけに使うものではない。
+  - Entitiyの中にある項目同士の、複数項目を使ったようなロジックなども書いていく。
+
+## WeatherEntityを実装してテスト実行
+* [Domain]＞[Entities]＞[WeatherEntity.cs]を作成する
+  - アクセス修飾子：public
+  - その他修飾子：sealed
+* プロパティを作成
+  - プロパティというのは、DBの`Weather`テーブルを検索してデータを取ってきてはめ込む値になる。 
+  - アクセス修飾子：public
+    ```
+    public int AreaId { get; set; }
+    public DateTime DataDate { get; set; }
+    public int Condition { get; set; }
+    public float Temperature { get; set; }
+    ```
+* コンストラクタを作成
+  - プロパティの値は、コンストラクタでセットする。
+  - なるべく完全コンストラクタパターンになるようにする。
+    ```
+    public WeatherEntity(int areaId, DateTime dataDate, int condition, float temperature)
+    {
+        AreaId = areaId;
+        DataDate = dataDate;
+        Condition = condition;
+        Temperature = temperature;
+    }
+    ```
+  - プロパティの`set`は削除して、外から値を変えられないようにする＝一意性のあるデータのひとかたまり。
+    - 読み取り専用プロパティ。
+    - 変えられるのは、コンストラクタで宣言した時のみ。
+    - インスタンス生成後は、プロパティの値が変わらないことが保証される。
+      - 非常に解析がしやすくなる。
+    - どうしても値を変えたいプロパティのみ、`set`を使う。
+    ```
+    public int AreaId { get; }
+    public DateTime DataDate { get; }
+    public int Condition { get; }
+    public float Temperature { get; }
+    ```
+* 値だけでなく、値を組み合わせたロジックを書いても良い。
+  - データを運ぶひとまとまりの中で、値のみに限らず、ロジックも書いてしまう。
+  - 例）`DataDate`と`Temperature`を組み合わせた判定ロジック。
+    ```
+    public bool IsOK()
+    {
+        if (DataDate < DateTime.Now.AddMonths(-1))
+        {
+            if (Temperature < 10)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    ```
+* [IWeatherRepository]の`GetLatest()`の戻り値を、`DataTable`から`WeatherEntity`に書き換える
+  - DBから取ってきたデータは、`WeatherEntity`型で返却する。
+* 一旦テスト実行
+  - コンパイルエラーが出るはず。
+  - 他クラスで`DataTable`となっている箇所を`WeatherEntity`に書き換える。
+    - テストを下記に修正。
+      ```
+      weatherMock.Setup(x => x.GetLatest(1)).Returns(() =>
+      {
+          return new WeatherEntity(1, Convert.ToDateTime("2018/01/01 12:34:56"), 2, 12.3f);
+      });
+      ```
+    - viewmodelを下記に修正。
+      ```
+      var entity = _weather.GetLatest(Convert.ToInt32(AreaIdText));
+
+      if (entity != null)
+      {
+          DataDateText = entity.DataDate.ToString();
+          ConditionText = entity.Condition.ToString();
+          TemperatureText = entity.Temperature.RoundString(CommonConst.TemperatureDecimalPoint) + " " + CommonConst.TemperatureUnitName;
+      }
+      ```
+────────────────────────────────────────────────
+# VluaeObject
+* 値として扱うクラスのこと
+* 別インスタンスでも、値が同じなら同じものと判断する
+  - クラスA：値3
+  - クラスB：値3
+  → 別インスタンスだが、値が同一のため、クラスA = クラスBと見なす。
+* 元々クラスは参照型だが、VlueObjectクラスは、int型やbool型等、プリミティブ型（値型）のような扱いに近いイメージ
+* 完全コンストラクタパターン（これは絶対）
+  - Entityでは、できる限り完全コンストラクタパターンにするが、ValueObjectでは絶対。
+* インスタンス生成時に値がセットされて、その値が二度と変わらないことが保証される
+  - もし値を変えたくなった場合は、別インスタンで生成し直す。
+* 値とロジックを一体化させる
+  - あるValueObjectの値が3だとして、その3に対する処理は、すべてValueObject内に書いていく。
+* 突き詰めていけばDB項目すべてをValueObjectにできるが、ビジネスロジックが無い項目は基本の型でもよい
+  - すべてValueObjectにすれば、アプリケーション的には非常に安定した作りにはなるが、作業負荷も高くなる。
+  - 作業負荷とのトレードオフで、ビジネスロジックが無いものはint型等、ValueObjectにしなくてもOK。
+  - 裏を返せば、ビジネスロジックがあるものは、基本すべてValueObjectにすべき。
+* ロジックが散らばる原因
+  - 値を基本の型（int, float, bool等）で動かすから。
+  - 例えばDBから取得したint型の値を、そのままアプリケーションのいろんな箇所で使うから、ビジネスロジックが散らばる。
+* DB等から値を取ってきたら、できる限り早い段階でValueObjectにする
+  - 値とロジックが一緒になっているクラスに変化させることで、ロジックは1つの場所に集まって安定する。
+* 現場でバグが生まれる原因の一つとして、値を基本の型で動かすから
+* UI層には知識がなく、Domain層に知識が集約される
+* まとめ
+  -  ロジックがいろんなところに散らばらないようにする、それに起因してのバグを減らす、に非常に強力な考え方。
+────────────────────────────────────────────────
+# VluaeObject実装
+
+## TemperatureをValueObject化
+* [WeatherLatestViewModel]の`Temperature`に知識が集まっている状況のため、ValueObject化していく
+  - 四捨五入したり、半角スペース入れたり、単位付けたり
+* `Temperature`とういう項目名をそのままValueObjectの名前にする
+* [Domain]＞[ValueObjects]＞[Temperature.cs]を作成する
+  - アクセス修飾子：public
+  - その他修飾子：sealed
+* 完全コンストラクタパターンにする
+  - 昔の書き方
+    ```
+    private readonly float _value;
+
+    public Temperature(float value)
+    {
+        _value = value;
+    }
+
+    public float Value => _value;
+    ```
+  - 今の書き方
+    ```
+    public Temperature(float value)
+    {
+        Value = value;
+    }
+
+    public float Value { get; }
+    ```
+
+## テストしながらロジックを書いていく
+* [TemperatureTest]を作成
+* テスト名：`小数点以下2桁でまるめて表示できる()`
+* インスタンス生成し、生成時にセットした値が正しく取得できるかをテスト
+  ```
+  var t = new Temperature(12.3f);
+
+  t.Value.Is(12.3f);
+  ```
+* 画面表示用のプロパティを作成
+  `t.DisplayValue.Is("12.30℃");`
+  - 存在しないプロパティでコンパイルエラーになるため、プロパティを生成する。
+  - テストが失敗する（`get`用の値を書いていないため）。
+  - プロパティにロジックを追加する。
+    `public string DisplayValue => Value.RoundString(DecimalPoint) + UnitName;`
+    - このタイミングで、[CommonConst.cs]の値も[Temperature.cs]に移す（名前も変更しておく）。
+      ```
+      public const string UnitName = "℃";
+      public const int DecimalPoint = 2;
+      ```
+────────────────────────────────────────────────
+# ValueObjectのインスタンスを値として扱う
+
+## テストしながら、Temperatureクラスにメソッド追加
+* まずは下記2パターンのテストを書いて、テストを失敗させる
+  ```
+  [TestMethod]
+  public void ValueObjectインスタンスEquals()
+  {
+      var t1 = new Temperature(12.3f);
+      var t2 = new Temperature(12.3f);
+
+      t1.Equals(t2).IsTrue();
+  }
+
+  [TestMethod]
+  public void ValueObjectインスタンス等価演算子()
+  {
+      var t1 = new Temperature(12.3f);
+      var t2 = new Temperature(12.3f);
+
+      (t1 == t2).IsTrue();
+  }
+  ```
+* Temperatureクラスにメソッドを追加
+  ```
+  public override bool Equals(object obj)
+  {
+      var vo = obj as Temperature;
+
+      if (vo == null)
+      {
+          return false;
+      }
+
+      return Value == vo.Value;
+  }
+
+  public static bool operator ==(Temperature vo1, Temperature vo2)
+  {
+      return Equals(vo1, vo2);
+  }
+
+  public static bool operator !=(Temperature vo1, Temperature vo2)
+  {
+      return !Equals(vo1, vo2);
+  }
+  ```
+
+## 基底クラスを作成して、共通化する
+* [Domain]＞[ValueObjects]＞[ValueObject.cs]を作成する
+  - アクセス修飾子：public
+  - その他修飾子：abstract
+    ```
+    public abstract class ValueObject<T> where T : ValueObject<T>
+    {
+        public override bool Equals(object? obj)
+        {
+            var vo = obj as T;
+
+            if (vo == null)
+            {
+                return false;
+            }
+
+            return EqualsCore(vo);
+        }
+
+        public static bool operator ==(ValueObject<T>? vo1, ValueObject<T>? vo2)
+        {
+            return Equals(vo1, vo2);
+        }
+
+        public static bool operator !=(ValueObject<T>? vo1, ValueObject<T>? vo2)
+        {
+            return !Equals(vo1, vo2);
+        }
+
+        protected abstract bool EqualsCore(T other);
+        protected abstract int GetHashCodeCore();
+
+    }
+    ```
+  - クラス名で「Ctrl+.」して、`GetHashCode`と`ToString`のオーバーライドを作成。
+    `GetHashCode()`は少し手直しする。
+    ```
+    public override int GetHashCode()
+    {
+        return GetHashCodeCore();
+    }
+
+    public override string? ToString()
+    {
+        return base.ToString();
+    }
+    ```
+
+## Temperatureに基底クラスを適用する
+* Temperatureクラスを下記に変更して、テストが成功すればOK
+  ```
+  public sealed class Temperature : ValueObject<Temperature>
+  {
+      public const string UnitName = "℃";
+      public const int DecimalPoint = 2;
+
+      public Temperature(float value)
+      {
+          Value = value;
+      }
+
+      public float Value { get; }
+      public string DisplayValue => Value.RoundString(DecimalPoint) + UnitName;
+
+      protected override bool EqualsCore(Temperature other)
+      {
+          return Value == other.Value;
+      }
+
+      protected override int GetHashCodeCore()
+      {
+          return Value.GetHashCode();
+      }
+  }
+  ```
+────────────────────────────────────────────────
+# ValueObjectをアプリケーションに適用する
+
+## WeatherEntityを修正
+`public float Temperature { get; }`
+      ↓ ↓ ↓
+`public Temperature Temperature { get; }`
+
+`Temperature = temperature;`
+      ↓ ↓ ↓
+`Temperature = new Temperature(temperature);`
+
+`if (Temperature < 10)`
+      ↓ ↓ ↓
+`if (Temperature.Value < 10)`
+
+## WeatherLatestViewModelを修正
+`TemperatureText = entity.Temperature.DisplayValue;`
+
+* テスト実行する
+  - [WeatherLatestViewModelTest]が、下記内容で失敗するはず。
+    `Assert.AreEqual に失敗しました。<12.30 ℃> が必要ですが、<12.30℃> が指定されました。`
+
+## TemperatureとWeatherLatestViewModelを修正
+* [Temperature]
+  ```
+  public string DisplayValue => Value.RoundString(DecimalPoint);
+  public string DisplayValueWithUnit => Value.RoundString(DecimalPoint) + UnitName;
+  public string DisplayValueWithUnitSpace => Value.RoundString(DecimalPoint) + " " + UnitName;
+  ```
+* [WeatherLatestViewModel]
+  `TemperatureText = entity.Temperature.DisplayValueWithUnitSpace;`
+* テスト実行する
+  - [TemperatureTest]が、下記内容で失敗するはず。
+    `Assert.AreEqual に失敗しました。<12.30℃> が必要ですが、<12.30> が指定されました。`
+  - テストコード修正。
+    ```
+    t.DisplayValue.Is("12.30");
+    t.DisplayValueWithUnit.Is("12.30℃");
+    t.DisplayValueWithUnitSpace.Is("12.30 ℃");
+    ```
+────────────────────────────────────────────────
+# クラス整理
+
+## CommonFuncを修正
+* `float`に対するメソッドしかないため、[FloatHelper]クラスに名称を変更
+────────────────────────────────────────────────
+# 区分系のValueObject
+
+## ConditionをValueObjectにする
+* [WeatherLatestViewModelTest]の`シナリオ()`を下記に修正
+  `viewModel.ConditionText.Is("2");`
+        ↓ ↓ ↓
+  `viewModel.ConditionText.Is("曇り");`
+* テスト実行して失敗させる
+* [Domain]＞[ValueObjects]＞[Condition.cs]を作成する
+  - アクセス修飾子：public
+  - その他修飾子：sealed
+  - 親クラス：ValueObject<Condition>
+* 完全コンストラクタパターンにする
+  ```
+  public sealed class Condition(int value)
+  {
+      Value = value;
+  }
+
+  public int Value { get; }
+  ```
+* 親クラスの抽象メソッドをオーバーライドして、処理内容を書き換える
+  ```
+  protected override bool EqualsCore(Condition other)
+  {
+      return Value == other.Value;
+  }
+
+  protected override int GetHashCodeCore()
+  {
+      return Value.GetHashCode();
+  }
+  ```
+* 上記のままだとValueObjectとして意味の無いクラスのため、ここからビジネスロジックを入れていく
+* `DisplayValue`プロパティを実装して、テストを失敗させる。
+  - [Condition.cs]
+    `public string DisplayValue { get; }`
+  - [WeatherEntity.cs]
+    `Condition = new Condition(condition);`
+    `public Condition Condition { get; }`
+  - [WeatherLatestViewModel.cs]
+    `ConditionText = entity.Condition.DisplayValue;`
+* [Condition.cs]にフィールドを追加し、`DisplayValue`も修正する
+  - フィールド
+    ```
+    /// <summary>
+    /// 不明
+    /// </summary>
+    public static readonly Condition Unknown = new Condition(0);
+
+    /// <summary>
+    /// 晴れ
+    /// </summary>
+    public static readonly Condition Sunny = new Condition(1);
+
+    /// <summary>
+    /// 曇り
+    /// </summary>
+    public static readonly Condition Cloudy = new Condition(2);
+
+    /// <summary>
+    /// 雨
+    /// </summary>
+    public static readonly Condition Rainy = new Condition(3);    
+    ```
+  - `DisplayValue`プロパティ
+    ```
+    public string DisplayValue
+    {
+        get
+        {
+            if (this == Sunny) return "晴れ";
+            if (this == Cloudy) return "曇り";
+            if (this == Rainy) return "雨";
+            return "不明";
+        }
+    }
+    ```
+* 再度テスト実行して成功すればOK
+
+## WeatherEntityにビジネスロジックを書く例
+* 猛暑か否かを判定するメソッド
+  ```
+  public bool IsExtremelyHot()
+  {
+      if (Condition == Condition.Sunny)
+      {
+          if (Temperature.Value > 35)
+          {
+              return true;
+          }
+      }
+
+      return false;
+  }
+  ```
+  - ポイントは、`if (Condition == Condition.Sunny)`の箇所。
+    - 比較対象をインテリセンスから選択することができる。
+    - インスタンス同士を値のように比較している。
+      - 基底クラス（ValueObject）で、`==`を予めオーバーライドしているため、このような比較ができる。
+* `if (Condition.IsSunny())`のように、Conditionクラスでメソッドを定義する使い方もOK
+  - Conditionクラスでのメソッド実装例
+    ```
+    public bool IsSunny()
+    {
+      return this == Sunny;
+    }
+    ```
+  - （自己コメント）行数多くなるから、基本は前述のフィールドにする方法が良さそうかな？
+────────────────────────────────────────────────
+# インフラストラクチャー
+
+## DBから取得したーデータを、画面に表示するよう実装
+* [WeatherLatestView]にviewmodelのインスタンスを作る
+  - `private WeatherLatestViewModel _viewModel = new WeatherLatestViewModel(****);`
+  - コンストラクタの引数には、SQL Serverに繋ぐためのものが必要になる。
+* [Infrastructure]＞[SqlServer]＞[WeatherSqlServer.cs]を作成
+  - アクセス修飾子：`public`
+  - 親：`IWeatherRepository`
+* `GetLatest()`を実装する
+  - 戻り値の型：`WeatherEntity`
+  ```
+    public WeatherEntity GetLatest(int areaId)
+  {
+      string sql = @"
+select top 1
+    DataDate,
+    Condition,
+    Temperature
+from Weather
+where AreaId = @AreaId
+order by DataDate desc
+";
+
+      using (var connection = new SqlConnection(CommonConst.ConnectionString))
+      using (var command = new SqlCommand(sql, connection))
+      {
+          connection.Open();
+
+          command.Parameters.AddWithValue("@AreaId", areaId);
+          using (var reader = command.ExecuteReader())
+          {
+              while (reader.Read())
+              {
+                  return new WeatherEntity(
+                      Convert.ToInt32(reader["AreaId"]),
+                      Convert.ToDateTime(reader["DataDate"]),
+                      Convert.ToInt32(reader["Condition"]),
+                      Convert.ToSingle(reader["Temperature"]));
+              }
+          }
+      }
+
+      return null;
+  }
+  ```
+* [WeatherLatestViewModel]に引数なしのコンストラクタを追加
+  ```
+  public WeatherLatestViewModel() : this(new WeatherSqlServer())
+  {
+  }
+  ```
+  - 上記は本番用として、テスト時は引数ありのコンストラクタで`new`すると良い。
+* [WeatherSqlServer]の`CommonConst.ConnectionString`について、SqlServer関連にまとまる
+  - [Infrastructure]＞[SqlServer]＞[SqlServerHelper.cs]
+    ```
+    internal static class SqlServerHelper
+    {
+        internal readonly static string ConnectionString;
+
+        static SqlServerHelper()
+        {
+            var builder = new SqlConnectionStringBuilder();
+
+            builder.DataSource = @"localhost\SQLEXPRESS";
+            builder.InitialCatalog = "DDD";
+            builder.IntegratedSecurity = true;
+            builder.TrustServerCertificate = true;
+
+            ConnectionString = builder.ConnectionString;
+        }
+    }
+    ```
+  - [CommonConst.cs]は削除しておく。
+────────────────────────────────────────────────
+# データバインディング
+* 定義：viewmodelのプロパティと、viewのコントロールのプロパティが同期して、お互いの値が切り替わる仕組みのこと
+
+## view側の設定（[WeatherLatestView]のコンストラクタに書く）
+```
+AreaIdTextBox.DataBindings.Add("Text", _viewModel, nameof(_viewModel.AreaIdText));
+DataDateLabel.DataBindings.Add("Text", _viewModel, nameof(_viewModel.DataDateText));
+ConditionLabel.DataBindings.Add("Text", _viewModel, nameof(_viewModel.ConditionText));
+TemperatureLabel.DataBindings.Add("Text", _viewModel, nameof(_viewModel.TemperatureText));
+```
+- `LatestButton_Click()`に`_viewModel.Search();`を追加しておく。
+- [WeatherSqlServer]`GetLatest()`を一部修正（`select`文に`AreaId`を指定していないため）
+  `Convert.ToInt32(reader["AreaId"]),`
+    ↓ ↓ ↓
+  `areaId,`
+
+## viewmodel側の設定
+* viewmodelの基底クラスを作成する
+  - [ViewModels]＞[ViewModelBase.cs]を作成
+  - アクセス修飾子：`public`
+  - その他修飾子：`abstract`
+  - インターフェース：`INotifyPropertyChanged`
+  - 下記`BindableBase`のコードを追加する。
+  ```
+  public event PropertyChangedEventHandler? PropertyChanged;
+
+  protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+  {
+      if (Equals(field, value))
+      {
+          return false;
+      }
+
+      field = value;
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+      return true;
+  }
+  ```
+* [WeatherLatestViewModel]を修正
+  - `ViewModelBase`を親クラスとして追加
+    - `public class WeatherLatestViewModel : ViewModelBase`
+  - 各プロパティを修正（併せてフィールドも追加）
+    ```
+    private string _areaIdText = string.Empty;
+    public string AreaIdText
+    {
+        get => _areaIdText;
+        set => SetProperty(ref _areaIdText, value);
+    }
+
+    private string _dataDateText = string.Empty;
+    public string DataDateText
+    {
+        get => _dataDateText;
+        set => SetProperty(ref _dataDateText, value);
+    }
+
+    private string _conditionText = string.Empty;
+    public string ConditionText
+    {
+        get => _conditionText;
+        set => SetProperty(ref _conditionText, value);
+    }
+
+    private string _temperatureText = string.Empty;
+    public string TemperatureText
+    {
+        get => _temperatureText;
+        set => SetProperty(ref _temperatureText, value);
+    }    
+    ```
+────────────────────────────────────────────────
+# コンボボックスへの変更1
+* AreaIdを入力するテキストボックスを、コンボボックスに変更する
+  - コンボボックスには、`Area`テーブルの`AreaId`に紐づくエリア名を一覧表示させる。
+
+## テストから書いていく
+* [WeatherLatestViewModelTest]
+  - エリア数をカウントするコードを書く。
+    `viewModel.Areas.Count.Is(2);`
+* `Areas`プロパティを生成する。
+  - 生成したプロパティを下記に書き換える。
+    `public BindingList<AreaEntity> Areas { get; set; } = new BindingList<AreaEntity>();`
+
+## Entityを作成する
+* [Domain]＞[Entities]＞[AreaEntity.cs]を作成
+  - アクセス修飾子：`public`
+  - その他修飾子：`sealed`
+  - 完全コンストラクタパターンにする。
+    ```
+    public AreaEntity(int areaId, string areaName)
+    {
+        AreaId = areaId;
+        AreaName = areaName;
+    }
+
+    public int AreaId { get; }
+    public string AreaName { get;  }
+    ```
+* [WeatherLatestViewModel]に戻って、`AreaEntity`の`using`を追加する
+  - テスト実行する → 失敗する。
+    `Assert.AreEqual に失敗しました。<2> が必要ですが、<0> が指定されました。`
+  - テストが成功（Count = 2）するように実装していく
+* mockを作成する
+  `var areasMock = new Mock<IAreasRepository>();`
+
+## Repositoryを作成する
+* [Domain]＞[Repositories]＞[IAreasRepository.cs]を作成
+  ```
+  public interface IAreasRepository
+  {
+  }
+  ```
+  - メソッドを定義する。
+    `IReadOnlyList<AreaEntity> GetData();`
+
+## テストを修正
+```
+var areasMock = new Mock<IAreasRepository>();
+
+var areas = new List<AreaEntity>
+{
+    new AreaEntity(1, "東京"),
+    new AreaEntity(2, "神戸")
+};
+
+areasMock.Setup(x => x.GetData()).Returns(areas);
+
+var viewModel = new WeatherLatestViewModel(weatherMock.Object, areasMock.Object);
+```
+* [WeatherLatestViewModel]のフィールドやコンストラクタを修正
+  - フィールド
+    `private IAreasRepository _areas;`
+  - コンストラクタ
+    ```
+    public WeatherLatestViewModel() : this(new WeatherSqlServer(), null)
+    {
+    }
+
+    public WeatherLatestViewModel(IWeatherRepository weather, IAreasRepository areas)
+    {
+        _weather = weather;
+        _areas = areas;
+
+        foreach (var area in _areas.GetData())
+        {
+            Areas.Add(area);
+        }
+    }
+    ```
+* これでテスト実行して成功すればOK
+  - 併せて下記テストも追加して実行する。
+    ```
+    viewModel.Areas[0].AreaId.Is(1);
+    viewModel.Areas[0].AreaName.Is("東京");
+    viewModel.Areas[1].AreaId.Is(2);
+    viewModel.Areas[1].AreaName.Is("神戸");
+    ```
+────────────────────────────────────────────────
+# コンボボックスへの変更2
+
+## WeatherLatestViewのコントロールを変更
+* `AreaIdTextBox`のテキストボックスを削除する
+* コンボボックスを設置する
+  - Name: `AreasComboBox`
+
+## WeatherLatestViewModelのフィールド＆プロパティを修正
+* AsIs
+  ```
+  private string _areaIdText = string.Empty;
+  public string AreaIdText
+  {
+      get => _areaIdText;
+      set => SetProperty(ref _areaIdText, value);
+  }
+  ```
+* ToBe
+  ```
+  private object _selectedAreaId; 
+  public object SelectedAreaId
+  {
+      get => _selectedAreaId;
+      set => SetProperty(ref _selectedAreaId, value);
+  }
+  ```
+
+## WeatherLatestViewModelTestを修正
+* `viewModel.AreaIdText = "1";` → `viewModel.SelectedAreaId.IsNull();`
+* `viewModel.AreaIdText = "1";` → `viewModel.SelectedAreaId = 1;`
+* `viewModel.AreaIdText.Is("1");` → `viewModel.SelectedAreaId.Is(1);`
+
+## WeatherLatestViewをのデータバインディングを修正
+* AsIs：`AreaIdTextBox.DataBindings.Add("Text", _viewModel, nameof(_viewModel.AreaIdText));`
+* Tobe：`AreasComboBox.DataBindings.Add("SelectedValue", _viewModel, nameof(_viewModel.SelectedAreaId));`
+
+## 実行するとコンパイルエラー
+* 原因：[WeatherLatestViewModel]のコンストラクタの第2引数が`null`のままだから
+────────────────────────────────────────────────
+# コンボボックスへの変更3
+
+## Infrastructureを作成する
+* [Infrastructure]＞[SqlServer]＞[AreasSqlServer.cs]
+  - アクセス修飾子：`public`
+  - その他修飾子：`sealed`
+  - インターフェース：`IAreasRepository`
+* `GetData()`の中身を書く
+  ```
+        public IReadOnlyList<AreaEntity> GetData()
+        {
+            string sql = @"
+select 
+    AreaId,
+    Name
+from Areas
+";
+
+            var result = new List<AreaEntity>();
+
+            using (var connection = new SqlConnection(SqlServerHelper.ConnectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result.Add(new AreaEntity(
+                            Convert.ToInt32(reader["AreaId"]),
+                            Convert.ToString(reader["Name"])));
+                    }
+                }
+            }
+
+            return result.AsReadOnly();
+        }
+  ```
+
+## viewmodelのコンストラクタを修正
+* `public WeatherLatestViewModel() : this(new WeatherSqlServer(), new AreasSqlServer())`
+* 実行するとコンパイルは通るものの、まだコンボボックスは空のまま
+
+## viewのデータバインディングを修正
+* コンストラクタに下記追加
+  ```
+  AreasComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+  AreasComboBox.DataBindings.Add("SelectedValue", _viewModel, nameof(_viewModel.SelectedAreaId));
+  AreasComboBox.DataBindings.Add("DataSource", _viewModel, nameof(_viewModel.Areas));
+  AreasComboBox.ValueMember = nameof(AreaEntity.AreaId);
+  AreasComboBox.DisplayMember = nameof(AreaEntity.AreaName);
+  ```
+* 実行して、コンボボックスにエリア名が一覧で出ればOK
+* データの無いエリア名を選択して直近値ボタンを押すと、画面に変化が表れない問題がある
+────────────────────────────────────────────────
+# コンボボックスへの変更4
+* データのない地域を選択したときの処理を書く
+
+## まずテストを書く
+* 追加：`new AreaEntity(3, "沖縄")`
+* 修正：`viewModel.Areas.Count.Is(3);`
+* 下記も追加
+  ```
+  viewModel.SelectedAreaId = 3;
+  viewModel.Search();
+  viewModel.SelectedAreaId.Is(3);
+  viewModel.DataDateText.Is("--");
+  viewModel.ConditionText.Is("--");
+  viewModel.TemperatureText.Is("--);
+  ```
+* テストが失敗するはず
+  - 直近の`DataDateText`のデータが表示されてしまう。
+
+## viewmodelを修正
+* `entity == null`のときの処理を追加
+  ```
+  if (entity == null)
+  {
+      DataDateText = "--";
+      ConditionText = "--";
+      TemperatureText = "--";
+  }
+  ```
+────────────────────────────────────────────────
+# SqlServerHelperの共通化1
+* [AreasSqlServer]と[WeatherSqlServer]にそれぞれ似た処理がある
+  - それらを共通化して、[SqlServerHelper]に定義する。
+
+# Listを返却するメソッド
+* [SqlServerHelper]
+  ```
+  internal static IReadOnlyList<T> Query<T>(string sql, Func<SqlDataReader, T> createEntity)
+  {
+      var result = new List<T>();
+
+      using (var connection = new SqlConnection(SqlServerHelper.ConnectionString))
+      using (var command = new SqlCommand(sql, connection))
+      {
+          connection.Open();
+
+          using (var reader = command.ExecuteReader())
+          {
+              while (reader.Read())
+              {
+                  result.Add(createEntity(reader));
+              }
+          }
+      }
+
+      return result.AsReadOnly();
+  }
+  ```
+* [AreasSqlServer]のメソッド修正
+  ```
+  return SqlServerHelper.Query(sql, reader =>
+      {
+          return new AreaEntity(
+                  Convert.ToInt32(reader["AreaId"]),
+                  Convert.ToString(reader["AreaName"]) ?? "");
+      });
+  ```
+────────────────────────────────────────────────
+# SqlServerHelperの共通化2
+
+# Entityを返却するメソッド
+* [SqlServerHelper]
+  ```
+  internal static T QuerySingle<T>(string sql, SqlParameter[] parameters, Func<SqlDataReader, T> createEntity, T nullEntity)
+  {
+      using (var connection = new SqlConnection(ConnectionString))
+      using (var command = new SqlCommand(sql, connection))
+      {
+          connection.Open();
+          command.Parameters.AddRange(parameters);
+
+          using (var reader = command.ExecuteReader())
+          {
+              while (reader.Read())
+              {
+                  return createEntity(reader);
+              }
+          }
+      }
+
+      return nullEntity;
+  }
+  ```
+* [WeatherSqlServer]のメソッド修正
+  ```
+  return SqlServerHelper.QuerySingle(sql,
+      new List<SqlParameter> 
+      { 
+          new SqlParameter("@AreaId", areaId)
+      }.ToArray(),
+      reader =>
+      {
+          return new WeatherEntity(
+                  areaId,
+                  Convert.ToDateTime(reader["DataDate"]),
+                  Convert.ToInt32(reader["Condition"]),
+                  Convert.ToSingle(reader["Temperature"]));
+      }, 
+      null);
+  ```
+
+## 汎用性を持たせた修正
+* `Query<T>()`
+  ```
+  internal static IReadOnlyList<T> Query<T>(string sql, Func<SqlDataReader, T> createEntity)
+  {
+      return Query<T>(sql, null, createEntity);
+  }
+
+  internal static IReadOnlyList<T> Query<T>(string sql, SqlParameter[]? parameters, Func<SqlDataReader, T> createEntity)
+  {
+      var result = new List<T>();
+
+      using (var connection = new SqlConnection(ConnectionString))
+      using (var command = new SqlCommand(sql, connection))
+      {
+          connection.Open();
+          if(parameters != null)
+          {
+              command.Parameters.AddRange(parameters);
+          }
+
+          using (var reader = command.ExecuteReader())
+          {
+              while (reader.Read())
+              {
+                  result.Add(createEntity(reader));
+              }
+          }
+      }
+
+      return result.AsReadOnly();
+  }
+  ```
+* `QuerySingle<T>()`
+  ```
+  internal static T QuerySingle<T>(string sql, Func<SqlDataReader, T> createEntity, T nullEntity)
+  {
+      return QuerySingle<T>(sql, null, createEntity, nullEntity);
+  }
+
+  internal static T QuerySingle<T>(string sql, SqlParameter[]? parameters, Func<SqlDataReader, T> createEntity, T nullEntity)
+  {
+      var entities = Query<T>(sql, parameters, createEntity);
+      if (entities.Count == 0)
+      return entities.Count > 0 ? entities[0] : nullEntity;
+  }
+  ```
+────────────────────────────────────────────────
+# 一覧画面の実装1
+* `Weather`テーブルの中身に`Areas`テーブルの`AreaName`を結合した表を、別画面で一覧表示する
+
+## テスト作成
+* [WeatherListViewModelTest.cs]を作成
+  - `天気一覧画面シナリオ()`
+    ```
+    var viewModel = new WeatherListViewModel();
+    viewModel.Weathers.Count.Is(2);
+    ```
+
+## viewmodel作成
+* 一旦コンパイルエラーを取り除くためにviewmodelを実装
+* [WeatherListViewModel.cs]
+  - アクセス修飾子：`public`
+  - 親クラス：`ViewModelBase`
+* テスト側にviewmodelのusingを追加
+* `Weathers`プロパティを生成
+  - 型：BindingList<T>
+
+## `Weathers`プロパティ用のviewmodelを作成
+* [WeatherListViewModelWeather.cs]
+  - アクセス修飾子：`public`
+  - その他修飾子：`sealed`
+  - 親クラス：なし
+* [WeatherListViewModel.cs]のプロパティを修正
+  - `public BindingList<WeatherListViewModelWeather> Weathers { get; set; } = new BindingList<WeatherListViewModelWeather>();`
+
+## テスト実行
+* 失敗するはず
+  - [Assert.AreEqual に失敗しました。<2> が必要ですが、<0> が指定されました。]
+
+## Moqを使う
+* テストに下記追加
+  ```
+  var weatherMock = new Mock<IWeatherRepository>();
+  var entities = new List<WeatherEntity>
+  {
+      new(1, Convert.ToDateTime("2018/01/01 12:34:56"), 2, 12.3f),
+      new(2, Convert.ToDateTime("2018/01/02 12:34:56"), 1, 22.1234f)
+  };
+
+  weatherMock.Setup(x => x.GetData()).Returns(entities);
+  ```
+* [IWeatherRepository]にメソッドを定義
+  `IReadOnlyList<WeatherEntity> GetData();`
+* [WeatherListViewModel]にフィールドとコンストラクタを追加
+  ```
+  private IWeatherRepository _weather;
+
+  public WeatherListViewModel(IWeatherRepository weather)
+  {
+      _weather = weather;
+
+      foreach (var entity in _weather.GetData())
+      {
+          Weathers.Add(new WeatherListViewModelWeather(entity));
+      }
+  }
+  ```
+* [WeatherListViewModelWeather]にフィールドとプライマリコンストラクタを追加
+  ```
+  public sealed class WeatherListViewModelWeather(WeatherEntity entity)
+  {
+      private WeatherEntity _entity = entity;
+  }
+  ```
+────────────────────────────────────────────────
+# 一覧画面の実装2
+
+## 画面に表示させる値をテストする
+* [WeatherListViewModelTest]
+  - すべて`string`型で画面に表示する仕様
+  ```
+  viewModel.Weathers[0].AreaId.Is("0001");
+  viewModel.Weathers[0].AreaName.Is("東京");
+  viewModel.Weathers[0].DateData.Is("2018/01/01 12:34:56");
+  viewModel.Weathers[0].Condition.Is("曇り");
+  viewModel.Weathers[0].Temperature.Is("12.30 ℃");
+  ```
+* [WeatherListViewModelWeather]
+  - プロパティ生成
+  ```
+  public string AreaId { get; set; }
+  public string AreaName { get; set; }
+  public string DateData { get; set; }
+  public string Condition { get; set; }
+  public string Temperature { get; set; }
+  ```
+* テスト実行 → 失敗
+  - [Assert.AreEqual に失敗しました。<0001> が必要ですが、<(null)> が指定されました。]
+  - プロパティ修正
+  ```
+  public string AreaId => _entity.AreaId.ToString();
+  public string AreaName => _entity.AreaName;
+  public string DateData => _entity.DataDate.ToString();
+  public string Condition => _entity.Condition.DisplayValue;
+  public string Temperature => _entity.Temperature.DisplayValueWithUnitSpace;
+  ```
+* `_entity.AreaName`のコンパイルエラーを取り除く
+  - [WetherEntity]
+    - `public string AreaName { get; }`プロパティ追加
+    - コンストラクタとプロパティを大幅修正（引数に`AreaName`有りバージョンと無しバージョン）
+      ```
+      public sealed class WeatherEntity(int areaId, string areaName, DateTime dataDate, int condition, float temperature)
+      {
+          #region コンストラクタ
+
+          public WeatherEntity(int areaId, DateTime dataDate, int condition, float temperature)
+              : this(areaId, string.Empty, dataDate, condition, temperature)
+          {
+          }
+
+          #endregion
+
+          #region プロパティ
+
+          public AreaId AreaId { get; } = new(areaId);
+          public string AreaName { get; } = areaName;
+          public DateTime DataDate { get; } = dataDate;
+          public Condition Condition { get; } = new(condition);
+          public Temperature Temperature { get; } = new(temperature);
+
+          #endregion
+      }
+      ```
+    - ※戻す場合
+      ```
+      public sealed class WeatherEntity
+      {
+        public WeatherEntity(int areaId, DateTime dataDate, int condition, float temperature)
+            : this(areaId, string.Empty, dataDate, condition, temperature)
+        {
+        }
+
+        public WeatherEntity(int areaId, string areaName, DateTime dataDate, int condition, float temperature)
+        {
+            AreaId = new AreaId(areaId);
+            AreaName = areaName;
+            DataDate = dataDate;
+            Condition = new Condition(condition);
+            Temperature = new Temperature(temperature);
+        }
+
+        public AreaId AreaId { get; }
+        public string AreaName { get; }
+        public DateTime DataDate { get; }
+        public Condition Condition { get; }
+        public Temperature Temperature { get; }
+      }
+      ```
+
+## テスト再実行
+* 1つ目と2つ目が失敗するはず
+  ```
+  viewModel.Weathers[0].AreaId.Is("0001");
+  viewModel.Weathers[0].AreaName.Is("東京");
+  viewModel.Weathers[0].DateData.Is("2018/01/01 12:34:56");
+  viewModel.Weathers[0].Condition.Is("曇り");
+  viewModel.Weathers[0].Temperature.Is("12.30 ℃");
+  ```
+* 1つ目は一旦`AreaId.Is("1")`にする
+* 2つ目はそのままで、モックデータの一部を修正
+  - AsIs：`new(1, Convert.ToDateTime("2018/01/01 12:34:56"), 2, 12.3f),`
+  - Tobe：`new(1, "東京", Convert.ToDateTime("2018/01/01 12:34:56"), 2, 12.3f),`
+* テスト成功すれば一旦OK
+────────────────────────────────────────────────
+# 一覧画面の実装3
+
+## AreaIdのValueObjectを作成する
+* [Domain]＞[ValueObjects]＞[AreaId.cs]を作成する
+  - アクセス修飾子：`public`
+  - その他修飾子：`sealed`
+  - 親クラス：`ValueObject`
+  - その他：プライマリコンストラクタにする
+  - 初期コードを実装
+    ```
+    public sealed class AreaId(int value) : ValueObject<AreaId>
+    {
+        public int Value { get; } = value;
+
+        protected override bool EqualsCore(AreaId other)
+        {
+            return Value == other.Value;
+        }
+
+        protected override int GetHashCodeCore()
+        {
+            return Value.GetHashCode();
+        }
+    }
+    ```
+  - ロジック系を追加
+    public string DisplayValue => Value.ToString("0000");
+* [WeatherEntity]
+  - プロパティ
+    `public AreaId AreaId { get; } = new(areaId);`
+* [WeatherListViewModelWeather]を修正
+  - `public string AreaId => _entity.AreaId.DisplayValue;`
+
+## おさらい
+* [WeatherEntity]と[WeatherListViewModelWeather]
+  - 2つの中身は、項目としては非常に似ているが、用途が全く違う。
+* [WeatherEntity]
+  - ビジネスロジックの置き場所。
+  - 基本的にはプロパティはValueObjectにする。
+  - それ以外の複合ロジック（メソッド）を書いていく。
+* [WeatherListViewModelWeather]
+  - 最終的にGridでデータを一覧表示する中で、`string`型でどんな表示をするのかを決定していく場所。
+  - viewmodelのプロパティの型は、最終的にバインディングするviewのプロパティと合わせる。
+  ────────────────────────────────────────────────
+# 一覧画面の実装4
+
+## データバインドして画面に表示させる
+* [Views]＞[WeatherListView.cs]
+* `DataGridView`コントロールを画面に追加
+  - プロパティ
+    Name: WeathersDataGrid
+    Dock: Fill
+* [WeatherListView]
+  - `WeatherListViewModel`のPrivateフィールドを追加
+* [WeatherListViewModel]
+  - 引数なしのコンストラクタを追加
+    ```
+    public WeatherListViewModel() : this(new WeatherSqlServer())
+    {
+    }
+    ```
+* [WeatherListView]
+  - データバインディング
+    `WeathersDataGrid.DataBindings.Add("DataSource", _viewModel, nameof(_viewModel.Weathers));`
+
+## 一覧表示用のボタンを実装
+* [WeatherLatestView]
+  - `Button`コントロールを画面に追加
+    Name: ListButton
+    Text: List
+* ボタンクリックで一覧表示の画面を表示
+  - `ListButton_Click()`
+    ```
+    using (var f = new WeatherListView())
+    {
+        f.ShowDialog();
+    }
+    ```
+* 一度実行してボタンの挙動を確認する
+  - 例外が発生するはず。
+    - [WeatherSqlServer]の`GetData()`が未実装のため。
+      ※ここで引っかかるように、以前のレクチャーで敢えて未実装にしていた。
+* SQL文を書いて、希望のデータが取得できるかを確認
+  ```
+  select
+    W.AreaId,
+    isnull(A.AreaName,'') as AreaName,
+    W.DataDate,
+    W.Condition,
+    W.Temperature
+  from Weather as W
+  left join Areas as A
+  on W.AreaId = A.AreaId
+  ```
+* [WeatherSqlServer]の`GetData()`にコードを書いていく
+  ```
+            string sql = @"
+select
+    W.AreaId,
+    isnull(A.AreaName,'') as AreaName,
+    W.DataDate,
+    W.Condition,
+    W.Temperature
+from Weather as W
+left join Areas as A
+on W.AreaId = A.AreaId
+";
+
+            return SqlServerHelper.Query(sql,
+                reader =>
+                {
+                    return new WeatherEntity(
+                            Convert.ToInt32(reader["AreaId"]),
+                            Convert.ToString(reader["AreaName"]) ?? "",
+                            Convert.ToDateTime(reader["DataDate"]),
+                            Convert.ToInt32(reader["Condition"]),
+                            Convert.ToSingle(reader["Temperature"]));
+                });
+        }
+    }
+  ```
+* 再度実行して、正常に一覧表示されればOK
+────────────────────────────────────────────────
+# Save画面の実装1
+
+## テストから書いていく
+* [WeatherSaveViewModelTest.cs]を作成
+  - `天気登録シナリオ()`
+    ```
+    var viewModel = new WeatherSaveViewModel();
+    viewModel.SelectedAreaId.IsNull();
+    viewModel.DataDateValue.Is(Convert.ToDateTime("2018/01/01 12:34:56"));
+    viewModel.SelectedCondition.Is(1);
+    viewModel.TemperatureText.Is("");
+    ```
+* コンパイルエラーを取り除く
+  - [ViewModels]＞[WeatherSaveViewModel.cs]を作成
+    - アクセス修飾子：`public`
+    - 親クラス：`ViewModelBase`
+  - プロパティ生成
+    ```
+    public object SelectedAreaId { get; set; }
+    public object DataDateValue { get; set; }
+    public object SelectedCondition { get; set; }
+    public object TemperatureText { get; set; }
+    ```
+  - 型を修正（データバインディングするコントロールの型に合わせる）
+    - コンボボックスは`object`のままでOK。
+    ```
+    public object SelectedAreaId { get; set; }
+    public DateTime DataDateValue { get; set; }
+    public object SelectedCondition { get; set; }
+    public string TemperatureText { get; set; }
+    ```
+  - テストに戻ってコンパイルエラーが全て取り除かれていればOK。
+
+## テストを実行してエラーを取り除いていく
+* 日付でテストが失敗するはず
+  - [Assert.AreEqual に失敗しました。<2018/01/01 12:34:56> が必要ですが、<0001/01/01 0:00:00> が指定されました。]
+  - コンストラクタを追加
+    ```
+    public WeatherSaveViewModel()
+    {
+        DataDateValue = DateTime.Now();
+    }
+    ```
+* 再度テスト失敗になるはず
+  - [Assert.AreEqual に失敗しました。<2018/01/01 12:34:56> が必要ですが、<2024/02/04 21:06:01> が指定されました。]
+────────────────────────────────────────────────
+# Save画面の実装2
+
+## viewmodelをMock化する
+* テストコードを修正
+  ```
+  var viewModelMock = new Mock<WeatherSaveViewModel>();
+  var viewModel = viewModelMock.Object;
+  ```
+* 上記のような書き方をすると、viewmodelにあるpublicでvirtualな関数が上書きできるようになる
+* viewmodelに関数を追加（`virtual`を入れ忘れるとMockでSetup出来ないので注意）
+  ```
+  public virtual DateTime GetDateTime()
+  {
+      return DateTime.Now;
+  }
+  ```
+* コンストラクタ内を修正
+  `DataDateValue = GetDateTime();`
+* MockでSetupする
+  `viewModelMock.Setup(x => x.GetDateTime()).Returns(Convert.ToDateTime("2018/01/01 12:34:56"));`
+* これでテストすれば、日付のテストまでOKになるはず
+* `GetDateTime()`は他の場面でも使用する可能性があるため、[ViewModelBase.cs]に移しておく
+
+## ConditionとTemperatureのテストをしていく
+* viewmodelのプロパティを修正
+  ```
+  public object SelectedCondition { get; set; } = Condition.Sunny.Value;
+  public string TemperatureText { get; set; } = string.Empty;
+  ```
+* これで全てのテストがOKになるはず
+────────────────────────────────────────────────
+# Save画面の実装3
+
+## コンボボックスを使う項目のテストをしていく
+* テストにコンボボックスのエリア名をカウントするコードを書く
+  - `viewModel.Areas.Count.Is(2);`
+* コンパイルエラーを取り除く
+  - [WeatherLatestViewModel]の`Areas`を流用する
+    - プロパティ
+      `public BindingList<AreaEntity> Areas { get; set; } = new();`
+    - フィールド
+      `private IAreasRepository _areas;`
+    - コンストラクタ
+      ```
+      public WeatherSaveViewModel(IAreasRepository areas)
+      {
+          _areas = areas;
+
+          DataDateValue = GetDateTime();
+
+          foreach(var area in _areas.GetData())
+          {
+              Areas.Add(area);
+          }
+      }
+      ```
+* テスト実行すると失敗するはず
+  - 原因：viewmodelのコンストラクタに引数を設定していないため。
+* Mockには引数を設定することも可能
+* まずは`IAreasRepository`のMockを作る
+  - [WeatherLatestViewModelTest.cs]から流用
+    ```
+    var areasMock = new Mock<IAreasRepository>();
+
+    var areas = new List<AreaEntity>
+    {
+        new AreaEntity(1, "東京"),
+        new AreaEntity(2, "神戸"),
+    };
+
+    areasMock.Setup(x => x.GetData()).Returns(areas);
+    ```
+* `areasMock`を引数にする
+  `var viewModelMock = new Mock<WeatherSaveViewModel>(areasMock.Object);`
+* これで`viewModel.Areas.Count.Is(2);`のテストまでOKになるはず
+
+## Conditionのコンボボックスのカウントテストもしていく
+* テストコード追加
+  `viewModel.Conditions.Count.Is(4);`
+* プロパティ生成
+  `public object Conditions { get; set; }`
+* コンボボックスにバインディングするため、`BindingList`を使用
+  - `Condition`はValueObjectなので、Listの型は`Condition`
+    `public BindingList<Condition> Conditions { get; set; } = new();`
+* `Condition`の4つの区分（フィールド）が欲しいので、それを返すメソッドを作成する
+  - [Condition.cs]
+    ```
+    public static IList<Condition> ToList()
+    {
+        return new List<Condition>
+        {
+            Unknown,
+            Sunny,
+            Cloudy,
+            Rainy
+        };
+    }
+    ```
+* viewmodelのプロパティ修正
+  `public BindingList<Condition> Conditions { get; set; } = new(Condition.ToList());`
+* これでテストがOKになるはず
+────────────────────────────────────────────────
+# Save画面の実装4
+
+## Saveボタンを押した時のnullチェック
+* テストにSaveする用の処理を書く
+  `viewModel.Save();`
+* エリア未選択だった場合は、エラーメッセージを表示する仕様にする
+  - エラー例：「エリアを選択してください」
+* コンパイルエラー取り除くために、`Save()`メソッドを自動生成しておく
+* 例外テストを書いていく
+  `ExceptionAssert.Throws<InputException>(() => viewModel.Save());`
+  - `viewModel.Save();`は不要のため消しておく。
+* コンパイルエラーを取り除く
+  - [Domain]＞[Exceptions]＞[InputException.cs]
+    アクセス修飾子：`public`
+    その他修飾子：`sealed`
+    親クラス：`Exception`
+* コンストラクタを作成
+  ```
+  public InputException(string message) : base(message)
+  {
+  }
+  ```
+* テストに戻って`InputException`のusingを追加する
+* viewmodelの`Save()`の処理が未実装のためテストは失敗するはず
+* `Save()`の処理を書く
+  ```
+  if (SelectedAreaId == null)
+  {
+      throw new InputException("エリアを選択してください");
+  }
+  ```
+  - テストが通るはず。
+* エラーメッセージが何であるかのテストをする
+  ```
+  var ex = ExceptionAssert.Throws<InputException>(() => viewModel.Save());
+  ex.Message.Is("エリアを選択してください");
+  ```
+  - テストが通ればOK。
+────────────────────────────────────────────────
+# Save画面の実装5
+
+## Helperクラスで共通化する
+* `Guard`クラスを追加
+  - [Domain]＞[Helpers]＞[Guard.cs]
+    アクセス修飾子：`public`
+    その他修飾子：`static`
+  - nullチェック用の関数を作成
+    ```
+    public static void IsNull(object o, string message)
+    {
+        if (o == null)
+        {
+            throw new InputException(message);
+        }
+    }
+    ```
+* viewmodelの`Save()`メソッドを下記1行に修正
+  `Guard.IsNull(SelectedAreaId, "エリアを選択してください");`
+* テスト通ればOK。
+────────────────────────────────────────────────
+# Save画面の実装6
+
+## その他の入力値チェックの有無
+* `DataDateValue`
+  - 初期値でシステム日時が入って、何かしらカレンダーから入力するしかない → チェック無し
+* `SelectedCondition`
+  - コンボボックスは、4つの区分からしか選べないようにする → チェック無し
+* `TemperatureText`
+  - 空文字の場合はエラーにしたい → チェック有り
+
+## `TemperatureText`のテストを書いていく
+* 空文字だった時のエラーメッセージ
+  ```
+  viewModel.SelectedAreaId = 2;
+  ex = ExceptionAssert.Throws<InputException>(() => viewModel.Save());
+  ex.Message.Is("温度の入力に誤りがあります");
+  ```
+  - テスト失敗するはず。
+* viewmodelの`Save()`メソッドに下記追加
+  ```
+  float temperature;
+  if (!float.TryParse(TemperatureText, out temperature))
+  {
+    throw new InputException("温度の入力に誤りがあります");
+  }
+  ```
+* 上記処理も`Guard`クラスに移す
+  ```
+  public static float IsFloat(string text, string message)
+  {
+      float floadValue;
+      if (!float.TryParse(text, out floadValue))
+      {
+          throw new InputException(message);
+      }
+
+      return floadValue;
+  }
+  ```
+* テストの処理も修正
+  `var temperature = Guard.IsFloat(TemperatureText, "温度の入力に誤りがあります");`
+  - テスト通ればOK。
+────────────────────────────────────────────────
+# Save画面の実装7
+
+## 保存処理のテストを書いていく
+* テストに下記追加
+  ```
+  viewModel.TemperatureText = "12.345";
+  viewModel.Save();
+  ```
+* `Save()`を読んだ時に、現状、入力チェックしかしていない
+* 次の行からDBへの保存処理をする
+  - つまり、`Weather`テーブルに接触するということ。
+* テストには`IWeatherRepository`のMockが必要になる
+  `var weatherMock = new Mock<IWeatherRepository>();`
+  - テストの一番上に書く。
+* `viewModelMock`のインスタンス生成時の引数を追加
+  `var viewModelMock = new Mock<WeatherSaveViewModel>(weatherMock.Object, areasMock.Object);`
+* viewmodelを修正
+  - フィールドとコンストラクタを修正（コード追加箇所のみ記載）
+    ```
+    private IWeatherRepository _weather;
+
+    public WeatherSaveViewModel(IWeatherRepository weather, IAreasRepository areas)
+    {
+        _weather = weather;
+    }
+    ```
+* `IWeatherRepository`を修正
+  `void Save(WeatherEntity weather);`
+* viewmodelに`Save()`の処理を書く
+  ```
+  var entity = new WeatherEntity(
+      Convert.ToInt32(SelectedAreaId),
+      DataDateValue,
+      Convert.ToInt32(SelectedCondition),
+      temperature
+      );
+
+  _weather.Save(entity);
+  ```
+* 上記以降はSQL Serverに接続するのでテストできないが、`entity`に値がセットされているかはテストでチェック可
+* `weatherMock`にSetupする
+  ```
+  weatherMock.Setup(x => x.Save(It.IsAny<WeatherEntity>())).
+      Callback<WeatherEntity>(saveValue =>
+      {
+          saveValue.AreaId.Value.Is(2);
+          saveValue.DataDate.Is(Convert.ToDateTime("2018/01/01 12:34:56"));
+          saveValue.Condition.Value.Is(1);
+          saveValue.Temperature.Value.Is(12.345f);
+      });
+  ```
+* コンパイルエラーを取り除く
+  - [WeatherSqlServer.cs]に`Save()`メソッドを自動生成
+    - 処理はまだ書かない。
+
+## 注意点
+* 現状、viewmodelの`Save()`に`_weather.Save(entity)`を書き忘れてもテストはOKになってしまう。
+* 回避するには`VerifyAll()`メソッドを使う
+  - テストに追加
+    `weatherMock.VerifyAll();`
+  - テストが失敗するはず。
+* `_weather.Save(entity)`を書いてから再度テストすればOKになるはず
+* これでSave系のテスト漏れを防ぐことができる
+────────────────────────────────────────────────
+# Save画面の実装8
+
+## view（フォーム）を作成する
+* [views]＞[.cs]
+  - コントロールを配置する
+    - Button x 1
+      Name: SaveButton
+      Text: Save
+    - Label x 5
+      Name: --
+      Text: 地域
+      Name: --
+      Text: 日時
+      Name: --
+      Text: 状態
+      Name: --
+      Text: 温度
+      Name: UnitLabel
+      Text: XX
+    - ComboBox x 2
+      Name: AreaIdComboBox
+      Name: ConditionComboBox
+    - DateTimePicker x 1
+      Name: DateTimeTextBox
+      Format: Custom
+      CustomFormat: yyyy/MM/dd HH:mm:ss
+    - TextBox x 1
+      Name: TemperatureTextBox
+
+## テスト
+* 温度の単位のテストを追加する
+  - [WeatherSaveViewModelTest]
+  - 初期値チェックの箇所に下記追加
+    `viewModel.TemperatureUnitName.Is("℃");`
+  - viewmodelのプロパティを自動生成
+    `public string TemperatureUnitName { get; set; }`
+    - 型は`string`に変更
+* テスト実行 → 失敗
+  - [Assert.AreEqual に失敗しました。<℃> が必要ですが、<(null)> が指定されました。]
+* viewmodelのプロパティに初期値を指定
+  `public string TemperatureUnitName { get; set; } = Temperature.UnitName;`
+* テスト通ればOK
+
+## viewの修正
+* viewmodelをnewする
+  - `private WeatherSaveViewModel _viewModel = new();`
+* コンパイルエラーを取り除く
+  - viewmodelに引数なしのコンストラクタを作成
+    ```
+    public WeatherSaveViewModel() : this(new WeatherSqlServer(), new AreasSqlServer())
+    {
+    }
+    ```
+* viewのコンストラクタ
+  - データバインドする項目を書いていく
+    ```
+    AreaIdComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+    AreaIdComboBox.DataBindings.Add("SelectedValue", _viewModel, nameof(_viewModel.SelectedAreaId));
+    AreaIdComboBox.DataBindings.Add("DataSource", _viewModel, nameof(_viewModel.Areas));
+    AreaIdComboBox.ValueMember = nameof(AreaEntity.AreaId);
+    AreaIdComboBox.DisplayMember = nameof(AreaEntity.AreaName);
+    DateTimeTextBox.DataBindings.Add("Value", _viewModel, nameof(_viewModel.DataDateValue));
+    ConditionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+    ConditionComboBox.DataBindings.Add("SelectedValue", _viewModel, nameof(_viewModel.SelectedCondition));
+    ConditionComboBox.DataBindings.Add("DataSource", _viewModel, nameof(_viewModel.Conditions));
+    ConditionComboBox.ValueMember = nameof(Condition.Value);
+    ConditionComboBox.DisplayMember = nameof(Condition.DisplayValue);
+    TemperatureTextBox.DataBindings.Add("Text", _viewModel, nameof(_viewModel.TemperatureText));
+    UnitLabel.DataBindings.Add("Text", _viewModel, nameof(_viewModel.TemperatureUnitName));
+    ```
+  - Saveボタンクリック時
+    ```
+    SaveButton.Click += (_, __) =>
+    {
+        try
+        {
+            _viewModel.Save();
+            MessageBox.Show("登録しました。");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
+    };
+    ```
+    > += 演算子は、既存のイベントハンドラに新しいイベントハンドラを追加するために使用されます。
+    > このイベントハンドラでは、引数を使用しないため、引数名をアンダースコアで置き換えることが一般的です。
+
+## WeatherLatesViewの画面にSaveボタン追加
+* 「List」ボタンの右横に「追加」ボタンを設置
+  - Name: SaveButton
+  - Text: 追加
+* クリックイベントを追加
+  ```
+  private void SaveButton_Click(object sender, EventArgs e)
+  {
+      using (var f = new WeatherSaveView())
+      {
+          f.ShowDialog();
+      }
+  }
+  ```
+
+## 実行する
+* 「追加」ボタンを押してSave画面が表示されればOK
+  - エリアと温度の入力チェックの挙動も確認しておく。
+* 「Save」ボタンは、まだ処理を実装していないため、エラーが表示される状態
+────────────────────────────────────────────────
+# Save画面の実装9
+
+## Save()メソッドを作る
+* [WeatherSqlServer.cs]
+  ```
+        public void Save(WeatherEntity weather)
+        {
+            string insert = @"
+insert into Weather
+(AreaId,DataDate,Condition,Temperature)
+values
+(@AreaId,@DataDate,@Condition,@Temperature)
+";
+
+            string update = @"
+update Weather
+set Condition = @Condition,
+    Temperature = @Temperature
+where AreaId = @AreaId
+and DataDate = @DataDate
+";
+
+            var args = new List<SqlParameter>
+            {
+                new("@AreaId", weather.AreaId.Value),
+                new("@DataDate", weather.DataDate),
+                new("@Condition", weather.Condition.Value),
+                new("@Temperature", weather.Temperature.Value),
+            };
+
+            SqlServerHelper.Execute(insert, update, args.ToArray());
+        }
+    }
+  ```
+
+## 共通関数を作る
+* [SqlServerHelper.cs]
+  ```
+  internal static void Execute(string insert, string update, SqlParameter[] parameters)
+  {
+      using (var connection = new SqlConnection(ConnectionString))
+      using (var command = new SqlCommand(update, connection))
+      {
+          connection.Open();
+
+          if (parameters != null)
+          {
+              command.Parameters.AddRange(parameters);
+          }
+
+          if (command.ExecuteNonQuery() == 0)
+          {
+              command.CommandText = insert;
+              command.ExecuteNonQuery();
+          }
+      }
+  }
+  ```
+* 汎用系も作っておく
+  ```
+  internal static void Execute(string sql, SqlParameter[] parameters)
+  {
+      using (var connection = new SqlConnection(ConnectionString))
+      using (var command = new SqlCommand(sql, connection))
+      {
+          connection.Open();
+
+          if (parameters != null)
+          {
+              command.Parameters.AddRange(parameters);
+          }
+
+          command.ExecuteNonQuery();
+      }
+  }
+  ```
+
+## 実行してみる
+* Saveボタン押下＞登録完了＞Listに正常に表示されていればOK
