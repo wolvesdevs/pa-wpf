@@ -4,6 +4,15 @@
              xmlns:local="clr-namespace:WpfApp1"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <SolidColorBrush x:Key="backColor" Color="Orange" />
+        <Style TargetType="Label">
+            <Setter Property="Background" Value="Bisque" />
+            <Setter Property="Foreground" Value="RosyBrown" />
+            <Setter Property="FontSize" Value="25" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="LawnGreen" />
+            <Setter Property="Foreground" Value="Plum" />
+            <Setter Property="FontSize" Value="20" />
+        </Style>
     </Application.Resources>
 </Application>
