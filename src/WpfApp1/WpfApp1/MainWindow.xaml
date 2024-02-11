@@ -6,11 +6,15 @@
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
         Title="MainWindow" Height="300" Width="300">
+    <Window.Resources>
+        <SolidColorBrush x:Key="ButtonBackground" Color="DarkBlue" />
+        <SolidColorBrush x:Key="ButtonForeground" Color="White" />
+    </Window.Resources>
     <Grid>
         <StackPanel>
-            <Label x:Name="ResultLabel" Content="" Height="100" HorizontalAlignment="Center" FontSize="60" />
-            <Button x:Name="AButton" Content="A" Height="50" FontSize="40" Click="AButton_Click" />
-            <Button x:Name="ClearButton" Content="Clear" Height="50" FontSize="40" Click="ClearButton_Click" />
+            <Label x:Name="ResultLabel" Content="" Height="100" HorizontalAlignment="Center" FontSize="60" Background="{StaticResource backColor}" />
+            <Button x:Name="AButton" Content="A" Height="50" FontSize="40" Background="{StaticResource ButtonBackground}" Foreground="{StaticResource ButtonForeground}" Click="AButton_Click" />
+            <Button x:Name="ClearButton" Content="Clear" Height="50" FontSize="40" Background="{StaticResource ButtonBackground}" Foreground="{StaticResource ButtonForeground}" Click="ClearButton_Click" />
         </StackPanel>
      </Grid>
 </Window>
