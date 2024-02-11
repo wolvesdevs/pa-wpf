@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="300">
+        Title="MainWindow" Height="500" Width="300">
     <Window.Resources>
-        <SolidColorBrush x:Key="ButtonBackground" Color="DarkBlue" />
-        <SolidColorBrush x:Key="ButtonForeground" Color="White" />
+        <!--<SolidColorBrush x:Key="ButtonBackground" Color="DarkBlue" />
+        <SolidColorBrush x:Key="ButtonForeground" Color="White" />-->
     </Window.Resources>
     <Grid>
         <StackPanel>
@@ -16,12 +16,18 @@
             <!--<Label x:Name="ResultLabel" Content="" Height="100" HorizontalAlignment="Center" FontSize="60" />
             <Button x:Name="AButton" Content="A" Height="50" FontSize="40" Background="{StaticResource ButtonBackground}" Foreground="{StaticResource ButtonForeground}" Click="AButton_Click" />
             <Button x:Name="ClearButton" Content="Clear" Height="50" FontSize="40" Background="{StaticResource ButtonBackground}" Foreground="{StaticResource ButtonForeground}" Click="ClearButton_Click" />-->
-            <Label Height="50" Content="AAA" HorizontalAlignment="Center" Foreground="Black" />
+            <!--<Label Height="50" Content="AAA" HorizontalAlignment="Center" Foreground="Black" />
             <Label Height="50" Content="BBB" HorizontalAlignment="Center" Background="Aqua"/>
             <Label Height="50" Content="CCC" HorizontalAlignment="Center" FontSize="10" />
             <Button Height="50" Content="DDD" HorizontalAlignment="Center" Foreground="Aqua" />
             <Button Height="50" Content="EEE" HorizontalAlignment="Center" Background="DarkMagenta" />
-            <Button Height="50" Content="FFF" HorizontalAlignment="Center" FontSize="70" />
+            <Button Height="50" Content="FFF" HorizontalAlignment="Center" FontSize="70" />-->
+            <Button Content="A1" Style="{StaticResource AButtonStyle}" />
+            <Button Content="A2" Style="{StaticResource AButtonStyle}" />
+            <Button Content="A3" Style="{StaticResource AButtonStyle}" />
+            <Button Content="B1" Style="{StaticResource BButtonStyle}" />
+            <Button Content="B2" Style="{StaticResource BButtonStyle}" />
+            <Button Content="B3" />
         </StackPanel>
      </Grid>
 </Window>
