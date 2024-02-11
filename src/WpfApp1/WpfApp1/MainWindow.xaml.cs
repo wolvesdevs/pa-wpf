@@ -20,5 +20,15 @@ namespace WpfApp1
         {
             InitializeComponent();
         }
+
+        private void AButton_Click(object sender, RoutedEventArgs e)
+        {
+            ResultLabel.Content += "A";
+        }
+
+        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ResultLabel.Content = "";
+        }
     }
 }

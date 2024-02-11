@@ -5,25 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="300" Width="300">
     <Grid>
         <StackPanel>
-            <Label Height="30"/>
-            <TextBox Height="30"/>
-            <TextBox Height="30"/>
-            <Button Height="30"/>
-
-            <StackPanel Orientation="Horizontal" Height="100">
-                <Label Height="30" Width="100"/>
-                <TextBox Height="30" Width="100"/>
-                <TextBox Height="30" Width="100"/>
-                <Button Height="30" Width="100"/>
-            </StackPanel>
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="10,20,30,40">
-                <Label Content="文字がかける"/>
-                <TextBox Text="0000"/>
-                <Button Content="ボタンです"/>
-            </StackPanel>
+            <Label x:Name="ResultLabel" Content="" Height="100" HorizontalAlignment="Center" FontSize="60" />
+            <Button x:Name="AButton" Content="A" Height="50" FontSize="40" Click="AButton_Click" />
+            <Button x:Name="ClearButton" Content="Clear" Height="50" FontSize="40" Click="ClearButton_Click" />
         </StackPanel>
      </Grid>
 </Window>
