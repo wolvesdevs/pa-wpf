@@ -2,24 +2,21 @@
 
 namespace WpfApp1.Objects
 {
-    public class Customer
+    public class Customer()
     {
-        //[PrimaryKey, AutoIncrement]
-        public int Id { get; set; }
-
-        /// <summary>
-        /// 名前
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// 電話番号
-        /// </summary>
-        public string Phone { get; set; }
-
-        public override string ToString()
+        public Customer(string name) : this()
         {
-            return $"{Id} - {Name} - {Phone}";
+            Name = name;
         }
+
+        public Customer(int id, string name) : this()
+        {
+            Id = id;
+            Name = name;
+        }
+
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 }

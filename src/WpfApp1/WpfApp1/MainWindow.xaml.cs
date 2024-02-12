@@ -19,31 +19,51 @@ namespace WpfApp1
     /// </summary>
     public partial class MainWindow : Window
     {
-        private ObservableCollection<Customer> _customers = new();
-        private int _index = 0;
-
         public MainWindow()
         {
             InitializeComponent();
-
-            for (int i = 0; i < 15; i++)
-            {
-                _customers.Add(new Customer { Id = ++_index, Name = $"name{_index}", Phone = $"phone{_index}" });
-            }
-
-            CustomerListView.ItemsSource = _customers;
+            ReadDatabase();
         }
 
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
-            _customers.Add(new Customer { Id = ++_index, Name = $"name{_index}", Phone = $"phone{_index}" });
-            CustomerListView.ItemsSource = _customers;
+            var f = new SaveView(null);
+            f.ShowDialog();
+            ReadDatabase();
         }
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            var filterList = _customers.Where(x => x.Name.Contains(SearchTextBox.Text)).ToList();
-            CustomerListView.ItemsSource = filterList;
+            //var filterList = _customer.Where(x => x.Name.Contains(SearchTextBox.Text)).ToList();
+            //CustomerListView.ItemsSource = filterList;
+        }
+
+        private void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            var item = CustomerListView.SelectedItem as Customer;
+            if (item == null)
+            {
+                MessageBox.Show("名前を選択してください。");
+                return;
+            }
+
+            var f = new SaveView(item);
+            f.ShowDialog();
+            ReadDatabase();
+        }
+
+        private void DelteButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ReadDatabase()
+        {
+            using (var connection = new SQLiteConnection(App.databasePath))
+            {
+                connection.CreateTable<Customer>();
+                CustomerListView.ItemsSource = connection.Table<Customer>().ToList();
+            }
         }
     }
 }
