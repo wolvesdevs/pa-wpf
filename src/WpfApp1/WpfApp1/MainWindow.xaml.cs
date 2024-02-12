@@ -26,9 +26,10 @@ namespace WpfApp1
         {
             InitializeComponent();
 
-            _customers.Add(new Customer { Id = ++_index, Name = $"name{_index}", Phone = $"phone{_index}" });
-            _customers.Add(new Customer { Id = ++_index, Name = $"name{_index}", Phone = $"phone{_index}" });
-            _customers.Add(new Customer { Id = ++_index, Name = $"name{_index}", Phone = $"phone{_index}" });
+            for (int i = 0; i < 15; i++)
+            {
+                _customers.Add(new Customer { Id = ++_index, Name = $"name{_index}", Phone = $"phone{_index}" });
+            }
 
             CustomerListView.ItemsSource = _customers;
         }
@@ -39,28 +40,10 @@ namespace WpfApp1
             CustomerListView.ItemsSource = _customers;
         }
 
-        //private void SaveButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    var customer = new Customer()
-        //    {
-        //        Name = NameTextBox.Text,
-        //        Phone = PhoneTextBox.Text,
-        //    };
-
-        //    using(var connection = new SQLiteConnection(App.databasePath))
-        //    {
-        //        connection.CreateTable<Customer>();
-        //        connection.Insert(customer);
-        //    }
-        //}
-
-        //private void ReadButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    using (var connection = new SQLiteConnection(App.databasePath))
-        //    {
-        //        connection.CreateTable<Customer>();
-        //        var customers = connection.Table<Customer>().ToList();
-        //    }
-        //}
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var filterList = _customers.Where(x => x.Name.Contains(SearchTextBox.Text)).ToList();
+            CustomerListView.ItemsSource = filterList;
+        }
     }
 }

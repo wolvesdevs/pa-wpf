@@ -7,12 +7,11 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="400" Width="400">
     <Window.Resources>
-        <!--<SolidColorBrush x:Key="ButtonBackground" Color="DarkBlue" />
-        <SolidColorBrush x:Key="ButtonForeground" Color="White" />-->
     </Window.Resources>
     <Grid>
         <StackPanel Margin="10">
             <Button x:Name="AddButton" Content="Add" FontSize="30" Click="AddButton_Click"/>
+            <TextBox x:Name="SearchTextBox" FontSize="20" TextChanged="SearchTextBox_TextChanged"/>
             <ListView x:Name="CustomerListView" Margin="0,5,0,0" Height="250">
                 <ListView.ItemTemplate>
                     <DataTemplate>
