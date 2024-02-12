@@ -4,7 +4,7 @@ namespace WpfApp1.Objects
 {
     public class Customer
     {
-        [PrimaryKey, AutoIncrement]
+        //[PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
         /// <summary>
@@ -16,5 +16,10 @@ namespace WpfApp1.Objects
         /// 電話番号
         /// </summary>
         public string Phone { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Id} - {Name} - {Phone}";
+        }
     }
 }

@@ -5,17 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="300" Width="300">
+        Title="MainWindow" Height="400" Width="400">
     <Window.Resources>
         <!--<SolidColorBrush x:Key="ButtonBackground" Color="DarkBlue" />
         <SolidColorBrush x:Key="ButtonForeground" Color="White" />-->
     </Window.Resources>
     <Grid>
         <StackPanel Margin="10">
-            <TextBox x:Name="NameTextBox"/>
-            <TextBox x:Name="PhoneTextBox"/>
-            <Button Content="Save" x:Name="SaveButton" Click="SaveButton_Click"/>
-            <Button Content="Read" x:Name="ReadButton" Click="ReadButton_Click"/>
+            <Button x:Name="AddButton" Content="Add" FontSize="30" Click="AddButton_Click"/>
+            <ListView x:Name="CustomerListView" Margin="0,5,0,0">
+                
+            </ListView>
         </StackPanel>
      </Grid>
 </Window>
