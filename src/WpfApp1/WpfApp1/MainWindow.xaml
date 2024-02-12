@@ -13,8 +13,16 @@
     <Grid>
         <StackPanel Margin="10">
             <Button x:Name="AddButton" Content="Add" FontSize="30" Click="AddButton_Click"/>
-            <ListView x:Name="CustomerListView" Margin="0,5,0,0">
-                
+            <ListView x:Name="CustomerListView" Margin="0,5,0,0" Height="250">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Id}"/>
+                            <TextBlock Text="{Binding Name}" FontSize="20"/>
+                            <TextBlock Text="{Binding Phone}" Foreground="Blue"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
             </ListView>
         </StackPanel>
      </Grid>
