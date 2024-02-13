@@ -10,7 +10,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using WpfApp1.Objects;
+using WpfApp1.Domain.Entities;
+using WpfApp1.Infrastructure.SQLite;
 
 namespace WpfApp1
 {
@@ -32,15 +33,9 @@ namespace WpfApp1
             ReadDatabase();
         }
 
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //var filterList = _customer.Where(x => x.Name.Contains(SearchTextBox.Text)).ToList();
-            //CustomerListView.ItemsSource = filterList;
-        }
-
         private void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
-            var item = CustomerListView.SelectedItem as Customer;
+            var item = CustomerListView.SelectedItem as CustomerEntity;
             if (item == null)
             {
                 MessageBox.Show("名前を選択してください。");
@@ -54,15 +49,27 @@ namespace WpfApp1
 
         private void DelteButton_Click(object sender, RoutedEventArgs e)
         {
+            var item = CustomerListView.SelectedItem as CustomerEntity;
+            if (item == null)
+            {
+                MessageBox.Show("名前を選択してください。");
+                return;
+            }
 
+            using(var connection = new SQLiteConnection(SQLiteHelper.DatabasePath))
+            {
+                connection.CreateTable<CustomerEntity>();
+                connection.Delete(item);
+                ReadDatabase();
+            }
         }
 
         private void ReadDatabase()
         {
-            using (var connection = new SQLiteConnection(App.databasePath))
+            using (var connection = new SQLiteConnection(SQLiteHelper.DatabasePath))
             {
-                connection.CreateTable<Customer>();
-                CustomerListView.ItemsSource = connection.Table<Customer>().ToList();
+                connection.CreateTable<CustomerEntity>();
+                CustomerListView.ItemsSource = connection.Table<CustomerEntity>().ToList();
             }
         }
     }

@@ -1,15 +1,15 @@
 ﻿using SQLite;
 
-namespace WpfApp1.Objects
+namespace WpfApp1.Domain.Entities
 {
-    public class Customer()
+    public class CustomerEntity()
     {
-        public Customer(string name) : this()
+        public CustomerEntity(string name) : this()
         {
             Name = name;
         }
 
-        public Customer(int id, string name) : this()
+        public CustomerEntity(int id, string name) : this()
         {
             Id = id;
             Name = name;

@@ -12,7 +12,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using WpfApp1.Objects;
+using WpfApp1.Domain.Entities;
+using WpfApp1.Infrastructure.SQLite;
 
 namespace WpfApp1
 {
@@ -21,9 +22,9 @@ namespace WpfApp1
     /// </summary>
     public partial class SaveView : Window
     {
-        private Customer _customer;
+        private CustomerEntity _customer;
 
-        public SaveView(Customer customer)
+        public SaveView(CustomerEntity customer)
         {
             InitializeComponent();
             NameTextBox.Focus();
@@ -43,17 +44,17 @@ namespace WpfApp1
                 return;
             }
 
-            using(var connection = new SQLiteConnection(App.databasePath))
+            using(var connection = new SQLiteConnection(SQLiteHelper.DatabasePath))
             {
-                connection.CreateTable<Customer>();
+                connection.CreateTable<CustomerEntity>();
                 if (_customer == null)
                 {
-                    connection.Insert(new Customer(NameTextBox.Text));
+                    connection.Insert(new CustomerEntity(NameTextBox.Text));
                     this.Close();
                 }
                 else
                 {
-                    connection.Update(new Customer(_customer.Id, NameTextBox.Text));
+                    connection.Update(new CustomerEntity(_customer.Id, NameTextBox.Text));
                     this.Close();
                 }
             }
