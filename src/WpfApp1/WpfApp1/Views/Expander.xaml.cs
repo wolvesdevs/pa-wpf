@@ -12,18 +12,16 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace WpfApp1
+namespace WpfApp1.UI.Views
 {
     /// <summary>
-    /// Grid.xaml の相互作用ロジック
+    /// Expander.xaml の相互作用ロジック
     /// </summary>
-    public partial class Grid : Window
+    public partial class Expander : Window
     {
-        public Grid()
+        public Expander()
         {
             InitializeComponent();
-
-            ResultLabel.Content = "12345";
         }
     }
 }
