@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace WpfApp1.UI
+namespace WpfApp1.UI.Views
 {
     /// <summary>
     /// RadioButtonView.xaml の相互作用ロジック

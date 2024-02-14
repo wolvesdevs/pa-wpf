@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 using WpfApp1.Domain.Entities;
 using WpfApp1.Infrastructure.SQLite;
 
-namespace WpfApp1
+namespace WpfApp1.UI.Views
 {
     /// <summary>
     /// SaveView.xaml の相互作用ロジック
