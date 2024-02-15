@@ -7,9 +7,25 @@
         mc:Ignorable="d"
         Title="ComboBox" Height="300" Width="400">
     <Grid>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-            <ComboBox x:Name="AComboBox" Height="40" Width="200" Margin="10" FontSize="20" VerticalAlignment="Center" SelectedValuePath="Id" DisplayMemberPath="Name"/>
-            <Button x:Name="AButton" Margin="10" Width="50" Content="check" Click="AButton_Click"/>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="AComboBox" Width="200" Margin="10" FontSize="20" VerticalAlignment="Center" SelectedValuePath="Id" DisplayMemberPath="Name"/>
+                <Button x:Name="AButton" Margin="10" Width="50" Content="check" Click="AButton_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="BComboBox" Height="40" Width="200" Margin="10" FontSize="20" VerticalAlignment="Center">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Id}" FontSize="14" Margin="5"/>
+                                <TextBlock Text="{Binding Name}" FontSize="14" Margin="5"/>
+                                <TextBlock Text="{Binding Phone}" FontSize="14" Margin="5"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button x:Name="BButton" Margin="10" Width="50" Content="check" Click="BButton_Click"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>

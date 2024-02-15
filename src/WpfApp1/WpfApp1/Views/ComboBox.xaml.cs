@@ -33,6 +33,7 @@ namespace WpfApp1.UI.Views
             _customers.Add(new Customer2Entity { Id = 3, Name = "Customer 3", Phone = "123-456-7890" });
 
             AComboBox.ItemsSource = _customers;
+            BComboBox.ItemsSource = _customers;
 
             AComboBox.Focus();
         }
@@ -50,6 +51,28 @@ namespace WpfApp1.UI.Views
                 sb.AppendLine($"SelectedIndex: {AComboBox.SelectedIndex}");
                 sb.AppendLine($"SelectedValue: {AComboBox.SelectedValue}");
                 sb.AppendLine($"Text: {AComboBox.Text}");
+                sb.AppendLine("-----------------------------");
+                sb.AppendLine($"Id: {item.Id}");
+                sb.AppendLine($"Name: {item.Name}");
+                sb.AppendLine($"Phone: {item.Phone}");
+
+                MessageBox.Show(sb.ToString());
+            }
+        }
+
+        private void BButton_Click(object sender, RoutedEventArgs e)
+        {
+            var item = BComboBox.SelectedItem as Customer2Entity;
+            if (item != null)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"SelectedItem: {BComboBox.SelectedItem as Customer2Entity}");
+                sb.AppendLine($"SelectedValuePath: {BComboBox.SelectedValuePath}");
+                sb.AppendLine($"SelectedDisplayMemberPath: {BComboBox.DisplayMemberPath}");
+                sb.AppendLine("-----------------------------");
+                sb.AppendLine($"SelectedIndex: {BComboBox.SelectedIndex}");
+                sb.AppendLine($"SelectedValue: {BComboBox.SelectedValue}");
+                sb.AppendLine($"Text: {BComboBox.Text}");
                 sb.AppendLine("-----------------------------");
                 sb.AppendLine($"Id: {item.Id}");
                 sb.AppendLine($"Name: {item.Name}");
