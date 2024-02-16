@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\file.png" />
+    <None Remove="Images\graph.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="sqlite-net-pcl" Version="1.8.116" />
   </ItemGroup>
 
@@ -27,6 +32,11 @@
 		<Resource Include="Images\C.jpeg">
 		  <CopyToOutputDirectory></CopyToOutputDirectory>
 		</Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Images\file.png" />
+	  <Resource Include="Images\graph.jpg" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -8,7 +8,7 @@
         Title="Menu" Height="250" Width="400">
     <Grid>
         <Menu>
-            <MenuItem Header="ファイル" Click="MenuItem_Click_1">
+            <MenuItem Header="ファイル" Click="MenuItem_Click">
                 <MenuItem Header="新規作成">
                     <MenuItem Header="雛形"/>
                 </MenuItem>
