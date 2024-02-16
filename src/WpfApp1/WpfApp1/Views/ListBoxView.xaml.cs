@@ -27,9 +27,9 @@ namespace WpfApp1.UI.Views
         {
             InitializeComponent();
 
-            _dtos.Add(new Dto("Images/A.jpeg", "Shinichi ONO"));
-            _dtos.Add(new Dto("Images/B.jpeg", "Jyunta INAMOTO"));
-            _dtos.Add(new Dto("Images/C.jpeg", "Naotaro TAKAHARA"));
+            _dtos.Add(new Dto("/Images/A.jpeg", "Shinichi ONO"));
+            _dtos.Add(new Dto("/Images/B.jpeg", "Jyunta INAMOTO"));
+            _dtos.Add(new Dto("/Images/C.jpeg", "Naotaro TAKAHARA"));
 
             MyListBox.ItemsSource = _dtos;
             SingleRadioButton.IsChecked = true;
