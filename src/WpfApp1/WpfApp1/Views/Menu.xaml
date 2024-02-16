@@ -1,0 +1,29 @@
+﻿<Window x:Class="WpfApp1.UI.Views.Menu"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1.UI.Views"
+        mc:Ignorable="d"
+        Title="Menu" Height="250" Width="400">
+    <Grid>
+        <Menu>
+            <MenuItem Header="ファイル" Click="MenuItem_Click_1">
+                <MenuItem Header="新規作成">
+                    <MenuItem Header="雛形"/>
+                </MenuItem>
+                <MenuItem Header="開く">
+                    <MenuItem Header="ファイル"/>
+                    <MenuItem Header="フォルダ"/>
+                </MenuItem>
+                <MenuItem Header="保存"/>
+            </MenuItem>
+            <MenuItem Header="編集"/>
+            <MenuItem Header="表示"/>
+            <MenuItem Header="印刷" Click="MenuItem_Click"/>
+            <MenuItem Header="ヘルプ">
+                <MenuItem Header="バージョン"/>
+            </MenuItem>
+        </Menu>
+    </Grid>
+</Window>
