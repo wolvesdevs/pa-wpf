@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\file.png" />
+    <None Remove="Images\graph.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="sqlite-net-pcl" Version="1.8.116" />
   </ItemGroup>
 
@@ -16,5 +21,49 @@
     <ProjectReference Include="..\WpaApp1.Domain\WpaApp1.Domain.csproj" />
     <ProjectReference Include="..\WpaApp1.Infrastructure\WpaApp1.Infrastructure.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Resource Include="Images\A.jpeg">
+		  <CopyToOutputDirectory></CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Images\B.jpeg">
+		  <CopyToOutputDirectory></CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Images\C.jpeg">
+		  <CopyToOutputDirectory></CopyToOutputDirectory>
+		</Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Images\file.png" />
+	  <Resource Include="Images\graph.jpg" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	  <Compile Update="Properties\Settings.Designer.cs">
+	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Settings.settings</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Properties\Settings.settings">
+	    <Generator>SettingsSingleFileGenerator</Generator>
+	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+	  </None>
+	</ItemGroup>
 
 </Project>

@@ -1,0 +1,28 @@
+﻿<Window x:Class="WpfApp1.UI.Views.ListBoxView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1.UI.Views"
+        mc:Ignorable="d"
+        Title="ListBoxView" Height="400" Width="300">
+    <Grid>
+        <StackPanel>
+            <ListBox x:Name="MyListBox" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10" Width="260" Height="180">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding FileName}" Width="50" Height="50" Margin="10"/>
+                            <TextBlock Text="{Binding Name}" Margin="10"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <RadioButton x:Name="SingleRadioButton" Content="Single" Margin="0,0,5,0" Checked="RadioButton_Checked"/>
+                <RadioButton x:Name="ExtendedRadioButton" Content="Extended" Margin="0,0,5,0" Checked="RadioButton_Checked"/>
+                <RadioButton x:Name="MultipleRadioButton" Content="Multiple" Margin="0,0,5,0" Checked="RadioButton_Checked"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
