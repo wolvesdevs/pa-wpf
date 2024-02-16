@@ -1,0 +1,25 @@
+﻿<Window x:Class="WpfApp1.UI.Views.TabControl"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1.UI.Views"
+        mc:Ignorable="d"
+        Title="TabControl" Height="300" Width="300">
+    <Grid>
+        <TabControl x:Name="MyTabControl" Margin="20">
+            <TabItem Header="TabA">
+                <StackPanel>
+                    <TextBox Margin="10"/>
+                    <Button Content="Save" Margin="10"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="TabB">
+                <StackPanel>
+                    <TextBox Margin="10"/>
+                    <Button Content="Search" Margin="10"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
