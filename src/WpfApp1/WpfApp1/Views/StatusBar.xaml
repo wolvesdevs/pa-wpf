@@ -1,0 +1,17 @@
+﻿<Window x:Class="WpfApp1.UI.Views.StatusBar"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1.UI.Views"
+        mc:Ignorable="d"
+        Title="StatusBar" Height="250" Width="300">
+    <Grid>
+        <StatusBar VerticalAlignment="Bottom">
+            <ProgressBar Width="60" Height="15" Value="60"/>
+            <Label Content="60%" FontSize="11"/>
+            <Separator/>
+            <Label Content="処理しています…" FontSize="11"/>
+        </StatusBar>
+    </Grid>
+</Window>
